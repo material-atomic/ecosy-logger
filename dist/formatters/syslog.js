@@ -1,0 +1,1 @@
+"use strict";var t=require("../utils.js");class a{getPri(r){return 8+{error:3,warn:4,info:6,log:6,debug:7}[r]}format(r,e){const{summary:o}=t.parseArgs(e),s=new Date().toISOString();return`<${this.getPri(r)}>1 ${s} ${t.getHostname()} core-app - - - ${o}`}}exports.SyslogFormatter=a;

@@ -1,0 +1,1 @@
+import{parseArgs as a,getHostname as i}from"../utils.mjs";class n{format(r,s){const{summary:e}=a(s),t=new Date,o=t.toISOString().split("T")[0],m=t.toTimeString().split(" ")[0];return`${o} ${m} ${r.toUpperCase()} ${i()} - - ${JSON.stringify(e)}`}}export{n as W3cFormatter};

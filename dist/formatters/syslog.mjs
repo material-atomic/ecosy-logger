@@ -1,0 +1,1 @@
+import{parseArgs as a,getHostname as s}from"../utils.mjs";class g{getPri(r){return 8+{error:3,warn:4,info:6,log:6,debug:7}[r]}format(r,t){const{summary:e}=a(t),o=new Date().toISOString();return`<${this.getPri(r)}>1 ${o} ${s()} core-app - - - ${e}`}}export{g as SyslogFormatter};

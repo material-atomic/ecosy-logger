@@ -1,0 +1,1 @@
+import{parseArgs as t}from"../utils.mjs";class m{format(r,e){const{summary:o}=t(e),a={error:"10",warn:"5",info:"3",log:"3",debug:"1"};return`CEF:0|CoreFramework|LoggerChain|1.0.0|LOG:${r.toUpperCase()}|${o}|${a[r]}|msg=${o}`}}export{m as CefFormatter};

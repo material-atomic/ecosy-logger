@@ -1,0 +1,1 @@
+const e=()=>typeof window<"u"?window.location.hostname:require("os").hostname?.()||"localhost",s=n=>{const o=typeof n[0]=="string"?n[0]:JSON.stringify(n[0]);return{summary:o,full:n.length>1?JSON.stringify(n):o}};export{e as getHostname,s as parseArgs};

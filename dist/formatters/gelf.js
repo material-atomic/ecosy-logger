@@ -1,0 +1,1 @@
+"use strict";var r=require("../utils.js");class o{mapLevel(e){return{error:3,warn:4,info:6,log:6,debug:7}[e]}format(e,t){const{summary:s,full:a}=r.parseArgs(t);return JSON.stringify({version:"1.1",host:r.getHostname(),short_message:s,full_message:a,timestamp:Date.now()/1e3,level:this.mapLevel(e),_framework_chain:"logger-core"})}}exports.GelfFormatter=o;

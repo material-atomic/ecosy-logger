@@ -1,0 +1,1 @@
+import{parseArgs as s,getHostname as a}from"../utils.mjs";class m{mapLevel(e){return{error:3,warn:4,info:6,log:6,debug:7}[e]}format(e,r){const{summary:o,full:t}=s(r);return JSON.stringify({version:"1.1",host:a(),short_message:o,full_message:t,timestamp:Date.now()/1e3,level:this.mapLevel(e),_framework_chain:"logger-core"})}}export{m as GelfFormatter};

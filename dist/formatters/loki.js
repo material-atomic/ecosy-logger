@@ -1,0 +1,1 @@
+"use strict";var t=require("../utils.js");class o{format(e,r){const{summary:s}=t.parseArgs(r);return JSON.stringify({streams:[{stream:{level:e,host:t.getHostname(),component:"core-image"},values:[[(Date.now()*1e6).toString(),s]]}]})}}exports.LokiFormatter=o;
