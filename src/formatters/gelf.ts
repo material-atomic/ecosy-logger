@@ -1,4 +1,4 @@
-import { ILogFormatter, LogLevel } from "../types";
+import { FormatterOptions, ILogFormatter, LogLevel } from "../types";
 import { getHostname, parseArgs } from "../utils";
 
 /**
@@ -6,6 +6,11 @@ import { getHostname, parseArgs } from "../utils";
  * Ideal for sending structured logs to Graylog or Logstash.
  */
 export class GelfFormatter implements ILogFormatter {
+  constructor(private readonly options: FormatterOptions = {}) {}
+
+  /** Identity reported for this app. Defaults to `"logger-core"`, what 1.0.0 emitted. */
+  private get service() { return this.options.service ?? "logger-core"; }
+
   private mapLevel(level: LogLevel): number {
     const mapping: Record<LogLevel, number> = { error: 3, warn: 4, info: 6, log: 6, debug: 7 };
     return mapping[level];
@@ -19,7 +24,7 @@ export class GelfFormatter implements ILogFormatter {
       full_message: full,
       timestamp: Date.now() / 1000,
       level: this.mapLevel(level),
-      _framework_chain: "logger-core"
+      _framework_chain: this.service
     });
   }
 }

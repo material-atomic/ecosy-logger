@@ -1,13 +1,24 @@
-import { ILogDelivery, LogLevel } from "../types";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { ILogDelivery, LogAdapter, LogLevel } from "../types";
 
 /**
- * A built-in delivery transport that logs formatted data to the standard console.
- * Uses native console methods (info, log, warn, error, debug) matching the log level.
- * Safe for both browser and Node.js environments.
+ * Sends formatted entries to a console-shaped target.
+ *
+ * Calls the method matching the level, falling back to `log` when the target
+ * has none, and spreads an array payload — which is what makes `TEXT` render
+ * as if `console.log` had been called directly.
+ *
+ * Safe in both the browser and Node.
  */
 export class ConsoleDelivery implements ILogDelivery {
+  /**
+   * @param target Where to write. Defaults to the global `console`.
+   */
+  constructor(private readonly target: LogAdapter = console) {}
+
   send(level: LogLevel, formattedData: any) {
-    const logFn = console[level] as (...data: any[]) => void;
+    const logFn = (this.target[level] ?? this.target.log).bind(this.target) as (...data: any[]) => void;
+
     if (Array.isArray(formattedData)) {
       logFn(...formattedData);
     } else {

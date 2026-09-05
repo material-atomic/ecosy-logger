@@ -1,12 +1,30 @@
-import { ILogFormatter, ILogDelivery, ILogger, ILoggerConstructor, LogLevel, LoggerStandard } from "./types";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import {
+  ILogFormatter,
+  ILogDelivery,
+  ILogger,
+  ILoggerConstructor,
+  LOG_SEVERITY,
+  LogAdapter,
+  LoggerOptions,
+  LogLevel,
+  LoggerStandard,
+} from "./types";
 import { FormatterFactory } from "./formatters/factory";
 import { ConsoleDelivery } from "./deliveries/console";
 
 abstract class AbstractLogger implements ILogger {
   protected abstract readonly formatter: ILogFormatter;
   protected abstract readonly deliveries: ILogDelivery[];
+  protected abstract readonly enabled: boolean;
+  protected abstract readonly minSeverity: number;
 
   protected dispatch(level: LogLevel, args: any[]) {
+    /* Checked before formatting, not in a delivery: a dropped entry should
+       cost nothing, and formatting it first would still run the JSON.stringify
+       whose result is then thrown away. */
+    if (!this.enabled || LOG_SEVERITY[level] < this.minSeverity) return;
+
     const formatted = this.formatter.format(level, args);
     for (const delivery of this.deliveries) {
       try {
@@ -28,21 +46,77 @@ abstract class AbstractLogger implements ILogger {
 }
 
 /**
- * Factory function that creates a new custom Logger class.
- * The Logger class is bound to a specific formatting standard and a set of delivery transports.
- * 
- * @param standard The log format standard (e.g. "JSON", "GELF", "OTLP"). Defaults to "TEXT".
- * @param deliveries An array of ILogDelivery transports to dispatch logs to. Defaults to ConsoleDelivery.
+ * Turns whatever `adapter` was given into deliveries.
+ *
+ * A delivery is told apart by having a `send` method; anything else is treated
+ * as console-shaped and wrapped. That is what lets `adapter: console` work
+ * without the caller knowing the ILogDelivery interface exists.
+ */
+function toDeliveries(adapter: LoggerOptions["adapter"]): ILogDelivery[] {
+  const targets = Array.isArray(adapter) ? adapter : [adapter];
+
+  return targets.map((target) =>
+    typeof (target as ILogDelivery)?.send === "function"
+      ? (target as ILogDelivery)
+      : new ConsoleDelivery(target as LogAdapter)
+  );
+}
+
+/**
+ * Creates a Logger class bound to a format, an output adapter, a severity
+ * threshold and an on/off switch.
+ *
+ * @example
+ * const AppLogger = Logger({
+ *   standard: "JSON",
+ *   service: "sniprender",
+ *   adapter: console,
+ *   level: "info",
+ * });
+ *
+ * const logger = new AppLogger();
+ * logger.debug("dropped, below the threshold");
+ * logger.warn("emitted");
+ *
+ * @example
+ * // Silenced, without the call sites having to know
+ * Logger({ enable: false });
+ *
+ * @param options Format, adapter, service name, level and enable flag.
  * @returns A class constructor implementing ILogger.
  */
+export function Logger(options?: LoggerOptions): ILoggerConstructor;
+/**
+ * The positional form kept from 1.0.0.
+ *
+ * @param standard The log format standard. Defaults to "TEXT".
+ * @param deliveries Transports to dispatch to. Defaults to ConsoleDelivery.
+ * @returns A class constructor implementing ILogger.
+ */
+export function Logger(standard?: LoggerStandard, deliveries?: ILogDelivery[]): ILoggerConstructor;
 export function Logger(
-  standard?: LoggerStandard, 
-  deliveries: ILogDelivery[] = [new ConsoleDelivery()]
+  arg?: LoggerOptions | LoggerStandard,
+  deliveries?: ILogDelivery[]
 ): ILoggerConstructor {
-  const staticFormatter = FormatterFactory.get(standard);
+  /* A string is the 1.0.0 signature; anything else is the options object. */
+  const options: LoggerOptions = typeof arg === "string" ? { standard: arg } : { ...arg };
+
+  const { service } = options;
+  const staticFormatter = FormatterFactory.get(options.standard, service ? { service } : undefined);
+
+  const staticDeliveries = options.adapter !== undefined
+    ? toDeliveries(options.adapter)
+    : deliveries ?? [new ConsoleDelivery()];
+
+  /* "debug" is the floor, so an omitted level emits everything — what 1.0.0
+     did, and what a logger with no threshold configured should keep doing. */
+  const staticMinSeverity = LOG_SEVERITY[options.level ?? "debug"];
+  const staticEnabled = options.enable ?? true;
 
   return class CustomLogger extends AbstractLogger {
     protected readonly formatter = staticFormatter;
-    protected readonly deliveries = deliveries;
+    protected readonly deliveries = staticDeliveries;
+    protected readonly enabled = staticEnabled;
+    protected readonly minSeverity = staticMinSeverity;
   };
 }

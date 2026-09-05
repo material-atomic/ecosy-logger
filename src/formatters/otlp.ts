@@ -1,4 +1,4 @@
-import { ILogFormatter, LogLevel } from "../types";
+import { FormatterOptions, ILogFormatter, LogLevel } from "../types";
 import { getHostname, parseArgs } from "../utils";
 
 /**
@@ -6,6 +6,11 @@ import { getHostname, parseArgs } from "../utils";
  * Outputs a JSON representation of the OTLP Protobuf structure.
  */
 export class OtlpFormatter implements ILogFormatter {
+  constructor(private readonly options: FormatterOptions = {}) {}
+
+  /** Identity reported for this app. Defaults to `"core-image"`, what 1.0.0 emitted. */
+  private get service() { return this.options.service ?? "core-image"; }
+
   private mapSeverity(level: LogLevel): { text: string, num: number } {
     const map: Record<LogLevel, { text: string, num: number }> = {
       trace: { text: "TRACE", num: 1 },
@@ -26,7 +31,7 @@ export class OtlpFormatter implements ILogFormatter {
       severityText: sev.text,
       body: { stringValue: summary },
       attributes: [{ key: "host.name", value: { stringValue: getHostname() } }],
-      resources: { attributes: [{ key: "service.name", value: { stringValue: "core-image" } }] }
+      resources: { attributes: [{ key: "service.name", value: { stringValue: this.service } }] }
     });
   }
 }
