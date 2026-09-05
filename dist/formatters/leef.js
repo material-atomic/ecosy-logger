@@ -1,1 +1,0 @@
-"use strict";var a=require("../utils.js");class s{format(e,r){const{summary:t}=a.parseArgs(r);return`LEEF:2.0|CoreFramework|LoggerChain|1.0.0|${e.toUpperCase()}|^|cat=System^msg=${t}^devTime=${new Date().toISOString()}`}}exports.LeefFormatter=s;

@@ -1,1 +1,0 @@
-"use strict";var t=require("../utils.js");class a{format(r,e){return JSON.stringify([`app.chain.${r}`,Math.floor(Date.now()/1e3),{message:t.parseArgs(e).summary,host:t.getHostname()}])}}exports.FluentdFormatter=a;

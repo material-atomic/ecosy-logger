@@ -1,1 +1,0 @@
-"use strict";const n=()=>typeof window<"u"?window.location.hostname:require("os").hostname?.()||"localhost",t=s=>{const e=typeof s[0]=="string"?s[0]:JSON.stringify(s[0]);return{summary:e,full:s.length>1?JSON.stringify(s):e}};exports.getHostname=n,exports.parseArgs=t;

@@ -1,1 +1,0 @@
-import{getHostname as a,parseArgs as e}from"../utils.mjs";class o{format(r,t){return JSON.stringify([`app.chain.${r}`,Math.floor(Date.now()/1e3),{message:e(t).summary,host:a()}])}}export{o as FluentdFormatter};

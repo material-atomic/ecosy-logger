@@ -1,1 +1,0 @@
-"use strict";var a=require("../utils.js");class s{format(r,o){const{summary:e}=a.parseArgs(o),t={error:"10",warn:"5",info:"3",log:"3",debug:"1"};return`CEF:0|CoreFramework|LoggerChain|1.0.0|LOG:${r.toUpperCase()}|${e}|${t[r]}|msg=${e}`}}exports.CefFormatter=s;

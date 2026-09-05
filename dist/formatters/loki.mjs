@@ -1,1 +1,0 @@
-import{parseArgs as o,getHostname as s}from"../utils.mjs";class a{format(t,e){const{summary:r}=o(e);return JSON.stringify({streams:[{stream:{level:t,host:s(),component:"core-image"},values:[[(Date.now()*1e6).toString(),r]]}]})}}export{a as LokiFormatter};

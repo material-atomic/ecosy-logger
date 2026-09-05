@@ -1,1 +1,0 @@
-import{parseArgs as o}from"../utils.mjs";class a{format(r,e){const{summary:t}=o(e);return`LEEF:2.0|CoreFramework|LoggerChain|1.0.0|${r.toUpperCase()}|^|cat=System^msg=${t}^devTime=${new Date().toISOString()}`}}export{a as LeefFormatter};

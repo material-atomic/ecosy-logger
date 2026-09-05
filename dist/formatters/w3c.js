@@ -1,1 +1,0 @@
-"use strict";var r=require("../utils.js");class m{format(s,e){const{summary:a}=r.parseArgs(e),t=new Date,i=t.toISOString().split("T")[0],o=t.toTimeString().split(" ")[0];return`${i} ${o} ${s.toUpperCase()} ${r.getHostname()} - - ${JSON.stringify(a)}`}}exports.W3cFormatter=m;
