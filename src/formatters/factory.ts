@@ -9,6 +9,7 @@ import { W3cFormatter } from "./w3c";
 import { OtlpFormatter } from "./otlp";
 import { FluentdFormatter } from "./fluentd";
 import { LokiFormatter } from "./loki";
+import { PrettyFormatter } from "./pretty";
 
 /**
  * Factory class responsible for instantiating the correct log formatter based on the chosen standard.
@@ -25,7 +26,8 @@ export class FormatterFactory {
     "W3C": new W3cFormatter(),
     "OTLP": new OtlpFormatter(),
     "Fluentd": new FluentdFormatter(),
-    "Loki": new LokiFormatter()
+    "Loki": new LokiFormatter(),
+    "PRETTY": new PrettyFormatter()
   };
 
   /** Constructors, for the case where a formatter has to be configured. */
@@ -39,7 +41,8 @@ export class FormatterFactory {
     "W3C": W3cFormatter,
     "OTLP": OtlpFormatter,
     "Fluentd": FluentdFormatter,
-    "Loki": LokiFormatter
+    "Loki": LokiFormatter,
+    "PRETTY": PrettyFormatter
   };
 
   /**

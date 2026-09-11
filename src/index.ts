@@ -11,5 +11,8 @@ export * from "./formatters/otlp";
 export * from "./formatters/fluentd";
 export * from "./formatters/loki";
 export * from "./formatters/factory";
+export * from "./formatters/pretty";
+export * from "./color";
 export * from "./deliveries/console";
+export * from "./deliveries/graylog";
 export * from "./logger";

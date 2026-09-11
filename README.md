@@ -56,6 +56,63 @@ const log = new OtelLogger();
 log.error("Failed to connect to DB", new Error("Timeout"));
 ```
 
+## PRETTY: coloured console output, NestJS-style
+
+```typescript
+import { Logger } from "@ecosy/logger";
+
+const AppLogger = Logger({ standard: "PRETTY", service: "api" });
+new AppLogger("Router").log("Mapped {/users, GET}");
+// [api] 41822  - 09/11/2026, 10:04:05 AM    LOG [Router] Mapped {/users, GET} +3ms
+```
+
+The context is the constructor's optional argument. Objects and Errors are
+passed to the console as they are, after the line, so it can inspect them and
+print a stack.
+
+Colour belongs to the **destination**, not the logger — escape codes are right
+for a terminal, `%c` styles for a browser console, and noise in a file or a log
+collector. So it is the console delivery that colours, and only PRETTY entries:
+
+- `color: "auto"` (default): ANSI on a TTY through the global `console`, CSS in
+  a browser console, plain anywhere else — including a custom adapter.
+  `NO_COLOR` turns it off, `FORCE_COLOR` on.
+- `color: "ansi" | "css" | "none"`, or `true` / `false` for auto / none.
+- `theme`: which colour each part takes. `NestTheme` is the default; a theme is
+  plain data, so `{ ...NestTheme, context: "cyan" }` changes one part.
+
+```typescript
+Logger({ standard: "PRETTY", color: "auto", theme: { ...NestTheme, context: "cyan" } });
+```
+
+## Graylog
+
+`GraylogDelivery` sends GELF 1.1 over HTTP (`fetch` — Node, browsers, edge) or
+UDP (Node, chunked when a message exceeds one datagram). It builds the GELF
+from the entry as logged, whatever the logger's standard, so one logger can
+print PRETTY to the terminal and ship GELF at once:
+
+```typescript
+import { Logger, GraylogDelivery } from "@ecosy/logger";
+
+const AppLogger = Logger({
+  standard: "PRETTY",
+  service: "sniprender",
+  adapter: [
+    console,
+    new GraylogDelivery({ url: "http://graylog:12201/gelf", service: "sniprender" }),
+    // or: new GraylogDelivery({ transport: "udp", host: "graylog", port: 12201 })
+  ],
+});
+
+new AppLogger("Jobs").warn("retrying", { attempt: 2 });   // _context: "Jobs" in Graylog
+```
+
+A send that fails goes to `onError` (default `console.error`) and is never
+thrown at the code that logged. Custom deliveries receive the same record as
+their third argument — `send(level, formatted, { level, args, context, time })`
+— to format for themselves.
+
 ## NestJS Integration
 
 Since `@ecosy/logger` is completely framework-agnostic, it plays perfectly with NestJS. You can seamlessly replace the default NestJS logger by implementing `LoggerService`.

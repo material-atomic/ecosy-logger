@@ -9,11 +9,14 @@ import {
   LoggerOptions,
   LogLevel,
   LoggerStandard,
+  LogRecord,
 } from "./types";
 import { FormatterFactory } from "./formatters/factory";
 import { ConsoleDelivery } from "./deliveries/console";
 
 abstract class AbstractLogger implements ILogger {
+  constructor(protected readonly context?: string) {}
+
   protected abstract readonly formatter: ILogFormatter;
   protected abstract readonly deliveries: ILogDelivery[];
   protected abstract readonly enabled: boolean;
@@ -25,10 +28,11 @@ abstract class AbstractLogger implements ILogger {
        whose result is then thrown away. */
     if (!this.enabled || LOG_SEVERITY[level] < this.minSeverity) return;
 
-    const formatted = this.formatter.format(level, args);
+    const record: LogRecord = { level, args, context: this.context, time: new Date() };
+    const formatted = this.formatter.format(level, args, record);
     for (const delivery of this.deliveries) {
       try {
-        const result = delivery.send(level, formatted);
+        const result = delivery.send(level, formatted, record);
         if (result instanceof Promise) {
           result.catch(err => console.error("[Logger] Async Delivery Error:", err));
         }
@@ -52,13 +56,13 @@ abstract class AbstractLogger implements ILogger {
  * as console-shaped and wrapped. That is what lets `adapter: console` work
  * without the caller knowing the ILogDelivery interface exists.
  */
-function toDeliveries(adapter: LoggerOptions["adapter"]): ILogDelivery[] {
+function toDeliveries(adapter: LoggerOptions["adapter"], options: LoggerOptions): ILogDelivery[] {
   const targets = Array.isArray(adapter) ? adapter : [adapter];
 
   return targets.map((target) =>
     typeof (target as ILogDelivery)?.send === "function"
       ? (target as ILogDelivery)
-      : new ConsoleDelivery(target as LogAdapter)
+      : new ConsoleDelivery(target as LogAdapter, { color: options.color, theme: options.theme })
   );
 }
 
@@ -105,8 +109,8 @@ export function Logger(
   const staticFormatter = FormatterFactory.get(options.standard, service ? { service } : undefined);
 
   const staticDeliveries = options.adapter !== undefined
-    ? toDeliveries(options.adapter)
-    : deliveries ?? [new ConsoleDelivery()];
+    ? toDeliveries(options.adapter, options)
+    : deliveries ?? [new ConsoleDelivery(console, { color: options.color, theme: options.theme })];
 
   /* "debug" is the floor, so an omitted level emits everything — what 1.0.0
      did, and what a logger with no threshold configured should keep doing. */

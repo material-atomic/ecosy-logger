@@ -1,4 +1,4 @@
-import { FormatterOptions, ILogFormatter, LogLevel } from "../types";
+import { FormatterOptions, ILogFormatter, LogLevel, LogRecord } from "../types";
 import { getHostname, parseArgs } from "../utils";
 
 /**
@@ -15,16 +15,19 @@ export class GelfFormatter implements ILogFormatter {
     const mapping: Record<LogLevel, number> = { error: 3, warn: 4, info: 6, log: 6, debug: 7 };
     return mapping[level];
   }
-  format(level: LogLevel, args: any[]) {
+  format(level: LogLevel, args: any[], record?: LogRecord) {
     const { summary, full } = parseArgs(args);
     return JSON.stringify({
       version: "1.1",
       host: getHostname(),
       short_message: summary,
       full_message: full,
-      timestamp: Date.now() / 1000,
+      timestamp: (record?.time.getTime() ?? Date.now()) / 1000,
       level: this.mapLevel(level),
-      _framework_chain: this.service
+      _framework_chain: this.service,
+      /* GELF's additional fields are underscore-prefixed; undefined drops out
+         of JSON.stringify, so a logger without a context sends none. */
+      _context: record?.context,
     });
   }
 }
