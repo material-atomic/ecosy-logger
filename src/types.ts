@@ -136,7 +136,8 @@ export interface LoggerOptions extends FormatterOptions {
 /**
  * - `"auto"` (default): ANSI when writing to a TTY through the global console,
  *   `%c` CSS in a browser console, plain otherwise — a file, a pipe, a CI log,
- *   a custom adapter. `NO_COLOR` turns it off, `FORCE_COLOR` on.
+ *   a custom adapter. `NO_COLOR` turns it off; `FORCE_COLOR` turns it on for
+ *   the global console only, never for a custom adapter.
  * - `"ansi"`, `"css"`, `"none"`: that, regardless of where it goes.
  * - `true` / `false`: `"auto"` / `"none"`.
  */

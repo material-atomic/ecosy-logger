@@ -47,8 +47,8 @@ export const css = (color: ColorName | ColorName[]) => list(color).map((c) => CS
  * "auto" colours only where colour is known to render and to be wanted: the
  * global console, in a browser (CSS) or on a terminal (ANSI). A custom adapter
  * is taken at its word as something else — a file, a test double, a buffer —
- * where escape codes are noise. NO_COLOR and FORCE_COLOR are the conventions
- * every other tool honours (no-color.org).
+ * where escape codes are noise. NO_COLOR turns colour off anywhere; FORCE_COLOR
+ * turns it on for the global console when it is not a TTY (no-color.org).
  */
 export function resolveColor(mode: ColorMode | undefined, target: LogAdapter): "ansi" | "css" | "none" {
   if (mode === false || mode === "none") return "none";
@@ -58,10 +58,16 @@ export function resolveColor(mode: ColorMode | undefined, target: LogAdapter): "
     typeof process !== "undefined" && process.env ? process.env : {};
   if (env.NO_COLOR) return "none";
 
-  const browser = typeof window !== "undefined" && typeof document !== "undefined";
-  if (env.FORCE_COLOR && env.FORCE_COLOR !== "0") return browser ? "css" : "ansi";
+  /* A custom adapter is a file, a buffer, a test double — never coloured by
+     "auto", FORCE_COLOR included. FORCE_COLOR answers "is this a terminal?"
+     for the global console; it is set wholesale in CI, and read as licence to
+     colour everything it would put escape codes into log files. Colour for a
+     custom adapter is asked for by name: color: "ansi". */
   if (target !== (globalThis as any).console) return "none";
+
+  const browser = typeof window !== "undefined" && typeof document !== "undefined";
   if (browser) return "css";
+  if (env.FORCE_COLOR && env.FORCE_COLOR !== "0") return "ansi";
 
   const stdout: any = typeof process !== "undefined" ? (process as any).stdout : undefined;
   return stdout?.isTTY ? "ansi" : "none";

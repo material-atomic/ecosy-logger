@@ -8,6 +8,11 @@ import { format } from "node:util";
 const { Logger, ConsoleDelivery, GraylogDelivery, resolveColor, NestTheme } =
   await import(new URL("../dist/index.mjs", import.meta.url).href);
 
+/* The terminal running these may set either — many do, and CI often sets
+   FORCE_COLOR. Tests that need them set them explicitly. */
+delete process.env.FORCE_COLOR;
+delete process.env.NO_COLOR;
+
 /** A console-shaped double that records what each level was called with. */
 const recorder = () => {
   const calls = [];
@@ -26,6 +31,14 @@ test("PRETTY lays out a NestJS-style line, plain on a custom adapter", () => {
   assert.match(first, new RegExp(`^\\[Nest\\] ${process.pid}  - \\d{2}/\\d{2}/\\d{4}, \\d{2}:\\d{2}:\\d{2} [AP]M    LOG \\[Router\\] Mapped /users`));
   assert.match(second, /  WARN \[Router\] slow \+\d+ms$/, "the second line carries the delta");
   assert.ok(!first.includes(ESC), "no escape codes into something that is not a terminal");
+  process.env.FORCE_COLOR = "1";
+  try {
+    const forced = recorder();
+    new (Logger({ standard: "PRETTY", adapter: forced }))().log("x");
+    assert.ok(!forced.calls[0].args[0].includes(ESC), "FORCE_COLOR in the environment does not reach a custom adapter");
+  } finally {
+    delete process.env.FORCE_COLOR;
+  }
   assert.equal(out.calls[1].level, "warn", "still the console method matching the level");
 });
 
@@ -65,13 +78,14 @@ test("objects and Errors go to the console as they are, after the line", () => {
   assert.deepEqual(rest[1], { id: 7 });
 });
 
-test("auto colour: only on the global console and a terminal; NO_COLOR and FORCE_COLOR win", () => {
+test("auto colour: only on the global console and a terminal; NO_COLOR and FORCE_COLOR as the conventions say", () => {
   const saved = { NO_COLOR: process.env.NO_COLOR, FORCE_COLOR: process.env.FORCE_COLOR };
   try {
     delete process.env.NO_COLOR; delete process.env.FORCE_COLOR;
     assert.equal(resolveColor("auto", recorder()), "none", "a custom adapter is not a terminal");
     process.env.FORCE_COLOR = "1";
-    assert.equal(resolveColor("auto", recorder()), "ansi");
+    assert.equal(resolveColor("auto", console), "ansi", "FORCE_COLOR: the console colours even off a TTY");
+    assert.equal(resolveColor("auto", recorder()), "none", "…but never a custom adapter — escape codes in a log file");
     process.env.NO_COLOR = "1";
     assert.equal(resolveColor("auto", console), "none");
     assert.equal(resolveColor(true, recorder()), "none", "NO_COLOR beats true (which is auto)");
